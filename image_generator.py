@@ -1,23 +1,37 @@
 from PIL import Image, ImageDraw, ImageFont
 import requests
-from PIL import Image
 from io import BytesIO
 
-def get_champion_splash(champion_name):
+def get_champion_splash(stats):
     # Capitalize first letter (required by Riot's CDN)
-    champ = champion_name.capitalize()
+    if stats["champion"]:
+        champ = stats["champion"].capitalize()
+    else:
+        champ = stats["backup_champion"].capitalize()
     url = f"https://ddragon.leagueoflegends.com/cdn/img/champion/splash/{champ}_0.jpg"
 
     response = requests.get(url)
     if response.status_code == 200:
         return Image.open(BytesIO(response.content)).resize((600, 300))
     else:
-        print(f"Failed to get splash art for {champion_name}")
+        print(f"Failed to get splash art for {champ}")
         return None
 
+def get_profile_icon(icon_id):
+    url = f"https://ddragon.leagueoflegends.com/cdn/15.14.1/img/profileicon/{icon_id}.png"
+    response = requests.get(url)
+    if response.status_code == 200:
+        return Image.open(BytesIO(response.content))
+    else:
+        print(f"Failed to get profile icon for ID {icon_id}")
+        return None
 
 def generate_summary_image(stats):
-    bg = get_champion_splash(stats["champion"]) or Image.new("RGB", (600, 300), (30, 30, 40))
+    bg = get_champion_splash(stats) or Image.new("RGB", (600, 300), (30, 30, 40))
+    icon = get_profile_icon(stats["profile_icon_id"])
+    if icon:
+        icon = icon.resize((50, 50))
+        bg.paste(icon, (550, 0))
     draw = ImageDraw.Draw(bg)
     font = ImageFont.load_default()
 
