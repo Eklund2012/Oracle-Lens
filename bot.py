@@ -1,7 +1,7 @@
 import discord
 import os
 from dotenv import load_dotenv
-from riot_api import get_summoner_stats
+from riot_api import calculate_stats
 from image_generator import generate_summary_image
 
 load_dotenv()
@@ -23,15 +23,22 @@ async def on_message(message):
 
     if message.content.startswith('!lolstats'):
         parts = message.content.split()
-        if len(parts) != 3:
-            await message.channel.send("Usage: `!lolstats <summoner-name> <region>`")
+        if len(parts) < 4:
+            await message.channel.send("Usage: `!lolstats <summoner-name> <tag-line> <region> (optional)<champion>`")
             return
 
         summoner_name = parts[1]
-        region = parts[2]
+        tag_line = parts[2]
+        if tag_line.startswith("#"):
+            tag_line = tag_line[1:]
+        region = parts[3]
+        champion = parts[4] if len(parts) > 4 else None
         await message.channel.send("Fetching summoner data...")
 
-        stats = get_summoner_stats(summoner_name, region)
+        stats = calculate_stats(summoner_name, tag_line, region, champion)
+        if not stats:
+            await message.channel.send("Failed to fetch stats, please check the summoner-name, tag-line and region.")
+            return
         image_path = generate_summary_image(stats)
 
         await message.channel.send(file=discord.File(image_path))
