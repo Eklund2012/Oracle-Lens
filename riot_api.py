@@ -2,111 +2,50 @@ import os
 import requests
 from dotenv import load_dotenv
 from time import sleep
+from config.constants import REGION_TO_PLATFORM, REGION_TO_REGIONAL
 
 load_dotenv()
 RIOT_API_KEY = os.getenv("RIOT_API_KEY")
-
-# Map common region codes to platform routing values needed by Riot API
-REGION_TO_PLATFORM = {
-    "NA": "na1",
-    "EUW": "euw1",
-    "EUNE": "eun1",
-    "KR": "kr",
-    "JP": "jp1",
-    "BR": "br1",
-    "OCE": "oc1",
-    "LAN": "la1",
-    "LAS": "la2",
-    "RU": "ru",
-    "TR": "tr1",
-}
-
-REGION_TO_REGIONAL = {
-    "NA": "americas",
-    "EUW": "europe",
-    "EUNE": "europe",
-    "KR": "asia",
-    "JP": "asia",
-    "BR": "americas",
-    "OCE": "sea",
-    "LAN": "americas",
-    "LAS": "americas",
-    "RU": "europe",
-    "TR": "europe",
-}
 
 def get_platform_and_regional(region: str):
     platform = REGION_TO_PLATFORM[region.upper()]  # → "euw1"
     regional = REGION_TO_REGIONAL[region.upper()]  # → "europe"
     if not platform or not regional:
         raise ValueError(f"Unsupported region '{region}'. Supported: {list(REGION_TO_PLATFORM.keys())}")
-
     return platform, regional
 
-def get_summoner_info(summoner_name: str, tag_line: str, region: str):
-    platform, regional = get_platform_and_regional(region)
-
-    url = f"https://{regional}.api.riotgames.com/riot/account/v1/accounts/by-riot-id/{summoner_name}/{tag_line}"
+def send_request(url, params=None):
     headers = {"X-Riot-Token": RIOT_API_KEY}
-    
-    response = requests.get(url, headers=headers)
-    if response.status_code == 200:
-        return response.json()
-    elif response.status_code == 429:
-        print("Rate limit exceeded, waiting 10 seconds...")
-        sleep(10)
-        return get_summoner_info(summoner_name, tag_line, region)
-    else:
-        response.raise_for_status()
-
-# PUUID = Platform Unique User Identifier
-def get_recent_match_ids(puuid: str, region: str, count=10):
-    platform, regional = get_platform_and_regional(region)
-
-    url = f"https://{regional}.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids"
-    params = {"count": count}
-    headers = {"X-Riot-Token": RIOT_API_KEY}
-
     response = requests.get(url, headers=headers, params=params)
     if response.status_code == 200:
         return response.json()
     elif response.status_code == 429:
         print("Rate limit exceeded, waiting 10 seconds...")
         sleep(10)
-        return get_recent_match_ids(puuid, region, count)
+        return send_request(url, params)
     else:
         response.raise_for_status()
+
+def get_summoner_info(summoner_name: str, tag_line: str, region: str):
+    platform, regional = get_platform_and_regional(region)
+    url = f"https://{regional}.api.riotgames.com/riot/account/v1/accounts/by-riot-id/{summoner_name}/{tag_line}"
+    return send_request(url)
+
+def get_recent_match_ids(puuid: str, region: str, count=10):
+    platform, regional = get_platform_and_regional(region)
+    url = f"https://{regional}.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids"
+    params = {"count": count}
+    return send_request(url, params)
 
 def get_match_details(match_id: str, region: str):
     platform, regional = get_platform_and_regional(region)
-
     url = f"https://{regional}.api.riotgames.com/lol/match/v5/matches/{match_id}"
-    headers = {"X-Riot-Token": RIOT_API_KEY}
-
-    response = requests.get(url, headers=headers)
-    if response.status_code == 200:
-        return response.json()
-    elif response.status_code == 429:
-        print("Rate limit exceeded, waiting 10 seconds...")
-        sleep(10)
-        return get_match_details(match_id, region)
-    else:
-        response.raise_for_status()
+    return send_request(url)
 
 def get_summoner_info_from_puuid(puuid: str, region: str):
     platform, regional = get_platform_and_regional(region)
     url = f"https://{platform}.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/{puuid}"
-    headers = {"X-Riot-Token": RIOT_API_KEY}
-
-    response = requests.get(url, headers=headers)
-    if response.status_code == 200:
-        return response.json()
-    elif response.status_code == 429:
-        print("Rate limit exceeded, waiting 10 seconds...")
-        sleep(10)
-        return get_summoner_info_from_puuid(puuid)
-    else:
-        response.raise_for_status()
+    return send_request(url)
 
 def calculate_stats(summoner_name: str, tag_line: str, region: str, champion: str, match_count=10):
     try:
@@ -116,11 +55,9 @@ def calculate_stats(summoner_name: str, tag_line: str, region: str, champion: st
         return None
 
     puuid = summoner_info["puuid"]
-    
     puuid_summoner_info = get_summoner_info_from_puuid(puuid, region)
     profile_icon_id = puuid_summoner_info["profileIconId"]
     profile_summoner_level = puuid_summoner_info["summonerLevel"]
-    print(profile_summoner_level)
 
     matches = get_recent_match_ids(puuid, region, count=match_count)
 
@@ -178,5 +115,6 @@ def calculate_stats(summoner_name: str, tag_line: str, region: str, champion: st
         "games": games,
         "champion": champion,
         "backup_champion": champion_name,
-        "profile_icon_id": profile_icon_id
+        "profile_icon_id": profile_icon_id,
+        "profile_summoner_level": profile_summoner_level
     }

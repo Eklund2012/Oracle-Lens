@@ -17,11 +17,11 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
-    print("Received message:", message.content)
     if message.author == client.user:
         return
 
     if message.content.startswith('!lolstats'):
+        print("Received !lolstats message:", message.content)
         parts = message.content.split()
         if len(parts) < 4:
             await message.channel.send("Usage: `!lolstats <summoner-name> <tag-line> <region> (optional)<champion>`")
