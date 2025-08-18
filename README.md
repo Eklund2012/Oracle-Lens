@@ -7,12 +7,11 @@ A Discord bot that fetches League of Legends match data using the Riot API and g
 Built with Python to showcase backend/API integration, image generation, and bot development.
 
 ## Setup
-
 Follow these steps to get OracleLens running locally:
 
 ### 1. Clone the repository
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/Eklund2012/Oracle-Lens.git
 cd OracleLens
 ```
 

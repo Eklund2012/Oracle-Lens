@@ -1,6 +1,46 @@
-# Python virtual environment
-venv/
-# Environment variables
-.env
-# Python bytecode files
+# ---- Python ----
 __pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pdb
+*.so
+*.egg
+*.egg-info/
+*.manifest
+*.spec
+
+# ---- Virtual environments ----
+venv/
+env/
+.env
+.env/
+.venv/
+
+# ---- Environment variables ----
+.env
+.env.*   # in case you use multiple (e.g., .env.dev, .env.prod)
+
+# ---- Logs ----
+*.log
+logs/
+
+# ---- Cache & test files ----
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.mypy_cache/
+.dmypy.json
+.pyre/
+.pytype/
+
+# ---- IDE / Editor ----
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ---- OS junk ----
+.DS_Store
+Thumbs.db
