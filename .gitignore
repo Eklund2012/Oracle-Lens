@@ -19,7 +19,7 @@ env/
 
 # ---- Environment variables ----
 .env
-.env.*   # in case you use multiple (e.g., .env.dev, .env.prod)
+.env.*
 
 # ---- Logs ----
 *.log
