@@ -62,7 +62,7 @@ python bot.py
 Once the bot is running and added to your server, you can use the !lolstats command to fetch
 stats:
 
-```bash
+```text
 !lolstats <summoner-name> <tag-line> <region> (optional)<champion>
 ```
 summoner-name → The player’s in-game name.
@@ -74,10 +74,10 @@ region → The server region (e.g., na, euw, kr, NA, EUW, KR).
 champion (optional) → (e.g., Vayne, Sion, Pyke)
 
 ### Examples
-```bash
+```text
 !lolstats TheBausffs COOL EUW
 ```
-```bash
+```text
 !lolstats Clayray EUW euw Vayne
 ```
 
