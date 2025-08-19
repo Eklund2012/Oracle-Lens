@@ -1,6 +1,8 @@
 # OracleLens
 
-A Discord bot that fetches League of Legends match data using the Riot API and generates clean, visual stat summaries for any summoner. Perfect for players who want quick insights without digging through dashboards.
+A Discord bot that fetches League of Legends match data using the Riot API and generates
+clean, visual stat summaries for any summoner. Perfect for players who want quick insights
+without digging through dashboards.
 
 ![OracleLens](assets/img/Oracle_Lens.png)
 
@@ -38,33 +40,51 @@ You can check that all packages are installed correctly:
 pip list
 ```
 
-### 5. Run the bot
-Make sure you have your environment variables set up (like your Discord bot token and Riot API key), then start your bot:
+### 5. Configure environment variables
+Create a `.env` file in the project root with the following variables:
+```env
+DISCORD_TOKEN=your_discord_bot_token_here
+RIOT_API_KEY=your_riot_api_key_here
+```
+
+DISCORD_TOKEN → Your Discord bot token from the [Discord Developer Portal](https://discord.com/developers/applications)
+
+RIOT_API_KEY → Your Riot API key from the [Riot Developer Portal](https://developer.riotgames.com/)
+
+
+### 6. Run the bot
+Make sure you have your environment variables set up and dependecies installed then start your bot:
 ```bash
-python main.py
+python bot.py
 ```
 
 ## Usage
-Once the bot is running and added to your server, you can use the !lolstats command to fetch stats:
+Once the bot is running and added to your server, you can use the !lolstats command to fetch
+stats:
 
 ```bash
 !lolstats <summoner-name> <tag-line> <region> (optional)<champion>
 ```
 summoner-name → The player’s in-game name.
 
-tag-line → The Riot tagline (with or without the #, e.g. NA1 or #NA1).
+tag-line → The Riot tagline (with or without the #, e.g. EUW or #EUW).
 
-region → The server region (e.g., na, euw, kr).
+region → The server region (e.g., na, euw, kr, NA, EUW, KR).
 
-champion (optional)
+champion (optional) → (e.g., Vayne, Sion, Pyke)
 
 ### Examples
 ```bash
-!lolstats Faker KR1 kr
+!lolstats TheBausffs COOL EUW
 ```
 ```bash
-!lolstats Doublelift NA1 na Kai'Sa
+!lolstats Clayray EUW euw Vayne
 ```
 
 ## License
-OracleLens isn't endorsed by Riot Games and doesn't reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games, and all associated properties are trademarks or registered trademarks of Riot Games, Inc.
+This project is licensed under the MIT License – see the [LICENSE](LICENSE) file for details.
+
+OracleLens isn't endorsed by Riot Games and doesn't reflect the views or opinions of Riot
+Games or anyone officially involved in producing or managing Riot Games properties. Riot
+Games, and all associated properties are trademarks or registered trademarks of Riot Games,
+Inc.
