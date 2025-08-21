@@ -1,0 +1,25 @@
+1. Statistik & Visualisering
+Hämta spelarstatistik (KDA, winrate, champion-stats) och presentera den snyggt.
+Generera diagram med t.ex. matplotlib eller plotly, och låt botten skicka bilder direkt i Discord.
+
+2. Live-data & Notifieringar
+Låt botten bevaka en specifik spelare eller match.
+Skicka automatiska notiser i Discord när en match startar/slutar, eller när en champion når en viss winrate.
+
+3. Databas-integration
+Spara spelarprofiler i en databas (SQLite eller PostgreSQL).
+Möjlighet för användare att "registrera sig" i Discord-servern så att botten håller koll på deras stats.
+
+4. AI eller Machine Learning
+Gör prediktioner: t.ex. gissa vinstchans baserat på champion picks.
+Träna en enkel ML-modell på historisk matchdata.
+
+5. Webbgränssnitt
+Bygg en liten dashboard (Flask/FastAPI + React) som kopplar ihop med din bot.
+T.ex. en sida där man kan se sin senaste matchhistorik eller statistik över serverns spelare.
+
+6. Polish för Portfolio
+Lägg projektet på GitHub med:
+📖 README (beskrivning, features, hur man kör den själv).
+🎥 GIF eller screenshot på botten i action.
+🚀 Om möjligt: en "deploy guide" så andra kan testa din bot.
