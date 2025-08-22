@@ -1,8 +1,9 @@
+RATE_LIMIT_EXCEEDED = 429
+BODY_JSON_RESPONSE = 200
 
-# image generation font constants
-# These fonts are used for rendering text in the generated images.
-title_font = "assets/fonts/BebasNeue-Regular.ttf"
-body_font = "assets/fonts/OpensSans-Regular.ttf"
+FETCHED_PARTICIPANT_MATCHES = 10
+
+DISCORD_RATE_LIMIT_TIMEOUT = 30
 
 # Map common region codes to platform routing values needed by Riot API
 # and regional endpoints.

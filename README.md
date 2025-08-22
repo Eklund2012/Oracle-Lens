@@ -4,8 +4,6 @@ A Discord bot that fetches League of Legends match data using the Riot API and g
 clean, visual stat summaries for any summoner. Perfect for players who want quick insights
 without digging through dashboards.
 
-![OracleLens](assets/img/Oracle_Lens.png)
-
 Built with Python to showcase backend/API integration, image generation, and bot development.
 
 ## Setup
@@ -19,11 +17,13 @@ cd OracleLens
 
 ### 2. Create a virtual environment
 It’s recommended to use a virtual environment to keep dependencies isolated:
+#### macOS/Linux
 ```bash
-# macOS/Linux
 python3 -m venv venv
 source venv/bin/activate
-# Windows
+```
+#### Windows
+```bash
 python -m venv venv
 source venv/Scripts/activate
 ```

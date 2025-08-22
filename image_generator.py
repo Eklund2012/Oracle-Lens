@@ -1,7 +1,7 @@
 from PIL import Image, ImageDraw, ImageFont
 import requests
 from io import BytesIO
-from config.constants import title_font, body_font
+from config.image_constants import title_font, body_font
 
 def get_champion_splash(stats):
     # Capitalize first letter (required by Riot's CDN)
