@@ -63,7 +63,7 @@ Once the bot is running and added to your server, you can use the !lolstats comm
 stats:
 
 ```text
-!lolstats <summoner-name> <tag-line> <region> (optional)<champion>
+!lolstats <summoner-name> <tag-line> <region> (optional)<match-count>
 ```
 summoner-name → The player’s in-game name.
 
@@ -71,14 +71,19 @@ tag-line → The Riot tagline (with or without the #, e.g. EUW or #EUW).
 
 region → The server region (e.g., na, euw, kr, NA, EUW, KR).
 
-champion (optional) → (e.g., Vayne, Sion, Pyke)
+match-count → amount of games to be analyzed (more games = longer wait time) 
+
+```text
+!help_lol
+```
+Typing !help_lol will give explantion of how to use the bot commands
 
 ### Examples
 ```text
-!lolstats TheBausffs COOL EUW
+!lolstats TheBausffs #COOL EUW
 ```
 ```text
-!lolstats Clayray EUW euw Vayne
+!lolstats Clayray EUW euw 30
 ```
 
 ## License

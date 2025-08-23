@@ -1,3 +1,4 @@
+from urllib import response
 import aiohttp
 import asyncio
 from config.API_constants import *
@@ -27,15 +28,15 @@ class RiotAPIClient:
                 if response.status == BODY_JSON_RESPONSE:  # 200
                     return await response.json()
                 elif response.status == RATE_LIMIT_EXCEEDED:  # 429
-                    print(f"Rate limit exceeded, waiting {self.rate_limit_timeout} seconds...")
-                    await asyncio.sleep(self.rate_limit_timeout)
+                    retry_after = int(response.headers.get("Retry-After", self.rate_limit_timeout))
+                    print(f"Rate limit exceeded, waiting {retry_after} seconds...")
+                    await asyncio.sleep(retry_after)
                     return await self.send_request(url, params)
                 else:
                     error_text = await response.text()
                     raise RiotAPIError(
                         f"Riot API error {response.status} on {url} with params {params}: {error_text}"
                     )
-
 
     async def get_summoner_info(self, summoner_name: str, tag_line: str, region: str):
         _, regional = self.get_platform_and_regional(region)
@@ -58,20 +59,30 @@ class RiotAPIClient:
         url = f"https://{regional}.api.riotgames.com/lol/match/v5/matches/{match_id}"
         return await self.send_request(url)
 
-    async def fetch_participant_matches(self, puuid: str, region: str, champion: str = None, match_count: int = FETCHED_PARTICIPANT_MATCHES):
-        """Return participant match data, optionally filtered by champion."""
+    async def fetch_participant_matches(self, puuid: str, region: str, match_count: int = FETCHED_PARTICIPANT_MATCHES, max_concurrent: int = SEMAPHORE_LIMIT):
+        """
+        Return participant match data for the latest `match_count` matches.
+        Fetches match details concurrently, throttled by `max_concurrent` to avoid hitting rate limits.
+        """
         matches = await self.get_recent_match_ids(puuid, region, count=match_count)
         participant_matches = []
 
-        for match_id in matches:
-            match_data = await self.get_match_details(match_id, region)
-            participants = match_data["info"]["participants"]
-            participant = next((p for p in participants if p["puuid"] == puuid), None)
-            if not participant:
-                continue
-            if champion and participant["championName"].lower() != champion.lower():
-                continue
-            participant_matches.append(participant)
+        semaphore = asyncio.Semaphore(max_concurrent)
+
+        async def fetch_one(match_id):
+            async with semaphore:
+                try:
+                    match_data = await self.get_match_details(match_id, region)
+                    participant = next((p for p in match_data["info"]["participants"] if p["puuid"] == puuid), None)
+                    return participant
+                except Exception as e:
+                    print(f"Failed to fetch match {match_id}: {e}")
+                    return None
+
+        results = await asyncio.gather(*(fetch_one(mid) for mid in matches))
+
+        # Filter out None results
+        participant_matches = [p for p in results if p is not None]
 
         return participant_matches
 
@@ -113,7 +124,7 @@ class RiotAPIClient:
             "games": games,
         }
 
-    async def calculate_stats(self, summoner_name: str, tag_line: str, region: str, champion: str = None, match_count: int = FETCHED_PARTICIPANT_MATCHES):
+    async def calculate_stats(self, summoner_name: str, tag_line: str, region: str, match_count: int = FETCHED_PARTICIPANT_MATCHES):
         """Fetch summoner stats and return aggregated performance metrics."""
         try:
             summoner_info = await self.get_summoner_info(summoner_name, tag_line, region)
@@ -132,24 +143,24 @@ class RiotAPIClient:
             print(f"Error fetching summoner info: {e}")
             return None
 
-        participant_matches = await self.fetch_participant_matches(puuid, region, champion, match_count)
+        participant_matches = await self.fetch_participant_matches(puuid, region, match_count)
         if not participant_matches:
             return None
 
         stats = self.aggregate_match_stats(participant_matches)
-        backup_champion = participant_matches[0]["championName"] if participant_matches else None
+        last_played_champion = participant_matches[0]["championName"] if participant_matches else None
 
         return {
             "name": summoner_name,
             "region": region.upper(),
+            "tag_line": tag_line,
             "winrate": stats["winrate"],
             "kda": f"{stats['avg_kills']} / {stats['avg_deaths']} / {stats['avg_assists']}",
             "avg_cs": stats["avg_cs"],
             "avg_gold": stats["avg_gold"],
             "avg_damage": stats["avg_damage"],
             "games": stats["games"],
-            "champion": champion,
-            "backup_champion": backup_champion,
+            "last_played_champion": last_played_champion,
             "profile_icon_id": profile_icon_id,
             "profile_summoner_level": profile_summoner_level,
         }

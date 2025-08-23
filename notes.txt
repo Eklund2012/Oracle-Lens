@@ -23,3 +23,5 @@ Lägg projektet på GitHub med:
 📖 README (beskrivning, features, hur man kör den själv).
 🎥 GIF eller screenshot på botten i action.
 🚀 Om möjligt: en "deploy guide" så andra kan testa din bot.
+
+Cacha match data

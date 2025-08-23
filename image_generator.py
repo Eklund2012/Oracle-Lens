@@ -1,3 +1,4 @@
+import io
 from PIL import Image, ImageDraw, ImageFont
 import requests
 from io import BytesIO
@@ -5,10 +6,9 @@ from config.image_constants import title_font, body_font
 
 def get_champion_splash(stats):
     # Capitalize first letter (required by Riot's CDN)
-    if stats["champion"]:
-        champ = stats["champion"].capitalize()  
-    else:
-        champ = stats["backup_champion"].capitalize()
+    if stats["last_played_champion"]:
+        champ = stats["last_played_champion"].capitalize()
+    print(f"Fetching splash art for champion: {champ}")
     url = f"https://ddragon.leagueoflegends.com/cdn/img/champion/splash/{champ}_0.jpg"
 
     response = requests.get(url)
@@ -43,8 +43,13 @@ def generate_summary_image(stats):
 
     font = ImageFont.truetype(title_font, size=25)
 
-    draw.text((510, 10), f"{stats['profile_summoner_level']}", fill="black", font=font)
-    draw.text((20, 20), f"Summoner: {stats['name']}", fill="white", font=font)
+    # Draw level badge
+    badge_size = 30
+    badge = Image.new("RGBA", (badge_size, badge_size), (0,0,0,180))
+    bg.paste(badge, (510+50, 10+50), badge)  # bottom-right corner av ikonen
+    draw.text((510+55, 10+55), f"{stats['profile_summoner_level']}", fill="white", font=font)
+
+    draw.text((20, 20), f"{stats['name']} #{stats['tag_line']}", fill="white", font=font)
     draw.text((20, 40), f"Winrate: {stats['winrate']}%", fill="white", font=font)
     draw.text((20, 60), f"KDA: {stats['kda']}", fill="white", font=font)
     draw.text((20, 80), f"Average CS: {stats['avg_cs']}", fill="white", font=font)
@@ -52,6 +57,7 @@ def generate_summary_image(stats):
     draw.text((20, 120), f"Average Damage: {stats['avg_damage']}", fill="white", font=font)
     draw.text((20, 140), f"Games Analyzed: {stats['games']}", fill="white", font=font)
 
-    image_path = "summary.png"
-    bg.save(image_path)
-    return image_path
+    output = io.BytesIO()
+    bg.save(output, format="PNG")
+    output.seek(0)
+    return output

@@ -4,7 +4,7 @@ from discord.ext import commands
 from dotenv import load_dotenv
 from riot_api import RiotAPIClient
 from image_generator import generate_summary_image
-from config.bot_constants import MINIMUM_MESSAGE_LENGTH_LOLSTATS
+from config.bot_constants import HELP_OUTPUT
 
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
@@ -17,7 +17,7 @@ intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-riot_client = RiotAPIClient(RIOT_API_KEY)
+riot_api_client = RiotAPIClient(RIOT_API_KEY)
 
 async def send_message(message, content=None, file=None):
     if content and file:
@@ -33,12 +33,15 @@ async def on_ready():
     print(f'Logged in as {bot.user}')
 
 @bot.hybrid_command(name="lolstats")
-async def lolstats(ctx, summoner_name: str, tag_line: str, region: str, champion: str = None):
+async def lolstats(ctx, summoner_name: str, tag_line: str, region: str, match_count: int = 25):
     """Fetches League of Legends stats for a summoner."""
     await ctx.send("Fetching summoner data...")
 
+    if tag_line.startswith("#"):
+        tag_line = tag_line[1:]
+
     try:
-        stats = await riot_client.calculate_stats(summoner_name, tag_line, region, champion)
+        stats = await riot_api_client.calculate_stats(summoner_name, tag_line, region, match_count)
     except Exception as e:
         print(f"Error in calculate_stats: {e}")
         await ctx.send("An unexpected error occurred. Please try again later.")
@@ -48,18 +51,18 @@ async def lolstats(ctx, summoner_name: str, tag_line: str, region: str, champion
         await ctx.send("Failed to fetch stats. Please check the summoner-name, tag-line, and region.")
         return
 
-    image_path = generate_summary_image(stats)
-    await ctx.send(file=discord.File(image_path))
+    #image_path = generate_summary_image(stats)
+    await ctx.send(file=discord.File(generate_summary_image(stats), "summary.png"))
 
 @bot.hybrid_command(name="help_lol")
 async def help_lol(ctx):
     """Explains how to use the lolstats command."""
-    await ctx.send("Usage: `!lolstats <summoner-name> <tag-line> <region> (optional)<champion>`")
+    await ctx.send(HELP_OUTPUT)
 
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send("Missing arguments. Usage: `!lolstats <summoner-name> <tag-line> <region> (optional)<champion>`")
+        await ctx.send("Missing arguments. Usage: `!lolstats <summoner-name> <tag-line> <region>`")
     elif isinstance(error, commands.CommandNotFound):
         return  # ignore unknown commands
     else:
