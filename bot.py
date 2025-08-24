@@ -11,7 +11,7 @@ TOKEN = os.getenv("DISCORD_TOKEN")
 RIOT_API_KEY = os.getenv("RIOT_API_KEY")
 
 if not RIOT_API_KEY or not TOKEN:
-    raise ValueError("API/TOKEN not found. Please set it in your .env file.")
+    raise ValueError("API/DISCORD TOKEN not found. Please set it in your .env file.")
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -27,6 +27,10 @@ async def send_message(message, content=None, file=None):
     elif file:
         await message.channel.send(file=file)
 
+def validate_match_count(count):
+    if not isinstance(count, int) or not (1 <= count <= 100):
+        raise ValueError("Match count must be an integer between 1 and 100.")
+
 # Event when the bot is ready
 @bot.event
 async def on_ready():
@@ -35,6 +39,12 @@ async def on_ready():
 @bot.hybrid_command(name="lolstats")
 async def lolstats(ctx, summoner_name: str, tag_line: str, region: str, match_count: int = 25):
     """Fetches League of Legends stats for a summoner."""
+    try:
+        validate_match_count(match_count)
+    except ValueError as ve:
+        await ctx.send(f"{ve}")
+        return
+    
     await ctx.send("Fetching summoner data...")
 
     if tag_line.startswith("#"):
@@ -62,12 +72,20 @@ async def help_lol(ctx):
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send("Missing arguments. Usage: `!lolstats <summoner-name> <tag-line> <region>`")
+        await ctx.send("❌ Missing arguments.\nUsage: `!lolstats <summoner-name> <tag-line> <region>`")
+    elif isinstance(error, commands.BadArgument):
+        await ctx.send("⚠️ Invalid argument type. Please check your inputs.")
+    elif isinstance(error, commands.CommandInvokeError):
+        # This wraps errors inside commands (like API failures)
+        original = getattr(error, "original", error)
+        await ctx.send(f"⚠️ An error occurred: {original}")
+        print(f"CommandInvokeError: {original}")
     elif isinstance(error, commands.CommandNotFound):
-        return  # ignore unknown commands
+        return  # ignore silently
     else:
         print(f"Unhandled error: {error}")
-        await ctx.send("An unexpected error occurred.")
+        await ctx.send("⚠️ An unexpected error occurred. The issue has been logged.")
+
 
 bot.run(TOKEN)
 

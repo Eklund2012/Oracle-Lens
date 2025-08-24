@@ -1,3 +1,4 @@
+from collections import Counter
 from urllib import response
 import aiohttp
 import asyncio
@@ -149,6 +150,12 @@ class RiotAPIClient:
 
         stats = self.aggregate_match_stats(participant_matches)
         last_played_champion = participant_matches[0]["championName"] if participant_matches else None
+        # Most played champion
+        champion_counts = Counter(p["championName"] for p in participant_matches)
+        most_played_champion, most_played_count = champion_counts.most_common(1)[0]
+        if most_played_count == 1 and len(champion_counts) > 1:
+            most_played_champion = None
+        print(f"Most played champion: {most_played_champion} ({most_played_count} games)")
 
         return {
             "name": summoner_name,
@@ -161,6 +168,8 @@ class RiotAPIClient:
             "avg_damage": stats["avg_damage"],
             "games": stats["games"],
             "last_played_champion": last_played_champion,
+            "most_played_champion": most_played_champion,
+            "most_played_count": most_played_count,
             "profile_icon_id": profile_icon_id,
             "profile_summoner_level": profile_summoner_level,
         }
