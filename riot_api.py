@@ -1,5 +1,4 @@
 from collections import Counter
-from urllib import response
 import aiohttp
 import asyncio
 from config.API_constants import *
@@ -155,7 +154,6 @@ class RiotAPIClient:
         most_played_champion, most_played_count = champion_counts.most_common(1)[0]
         if most_played_count == 1 and len(champion_counts) > 1:
             most_played_champion = None
-        print(f"Most played champion: {most_played_champion} ({most_played_count} games)")
 
         return {
             "name": summoner_name,

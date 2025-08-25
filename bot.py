@@ -78,7 +78,7 @@ async def on_command_error(ctx, error):
     elif isinstance(error, commands.CommandInvokeError):
         # This wraps errors inside commands (like API failures)
         original = getattr(error, "original", error)
-        await ctx.send(f"⚠️ An error occurred: {original}")
+        await ctx.send(f"⚠️ An error occurred (flame Madao)")
         print(f"CommandInvokeError: {original}")
     elif isinstance(error, commands.CommandNotFound):
         return  # ignore silently
@@ -86,7 +86,4 @@ async def on_command_error(ctx, error):
         print(f"Unhandled error: {error}")
         await ctx.send("⚠️ An unexpected error occurred. The issue has been logged.")
 
-
 bot.run(TOKEN)
-
-    
