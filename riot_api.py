@@ -114,7 +114,7 @@ class RiotAPIClient:
 
         games = len(participant_matches)
         return {
-            "winrate": round((total["wins"] / games) * 100, 2),
+            "winrate": round((total["wins"] / games) * 100, 2), # * 100 for percentage conversion
             "avg_kills": round(total["kills"] / games, 2),
             "avg_deaths": round(total["deaths"] / games, 2),
             "avg_assists": round(total["assists"] / games, 2),

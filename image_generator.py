@@ -109,16 +109,40 @@ def generate_summary_image(stats):
         icon = generate_icon_image(icon, stats)
         bg.paste(icon, (0, 0))
 
-    draw = ImageDraw.Draw(bg)
-    font = ImageFont.truetype(title_font, size=50)
+    draw = ImageDraw.Draw(bg, "RGBA")
+    font = ImageFont.truetype(title_font, size=40)
 
-    draw.text((400, 40), f"Winrate: {stats['winrate']}%", fill="white", font=font)
-    draw.text((400, 85), f"KDA: {stats['kda']}", fill="white", font=font)
-    draw.text((400, 125), f"Average CS: {stats['avg_cs']}", fill="white", font=font)
-    draw.text((400, 165), f"Average Gold: {stats['avg_gold']}", fill="white", font=font)
-    draw.text((400, 205), f"Average Damage: {stats['avg_damage']}", fill="white", font=font)
-    draw.text((400, 245), f"Games Analyzed: {stats['games']}", fill="white", font=font)
-    
+    # Stats to display
+    stats_text = [
+        f"Winrate: {stats['winrate']}%",
+        f"KDA: {stats['kda']}",
+        f"Average CS: {round(stats['avg_cs'], 1)}",
+        f"Average Gold: {round(stats['avg_gold'], 0)}",
+        f"Average Damage: {round(stats['avg_damage'], 0)}",
+        f"Games Analyzed: {stats['games']}"
+    ]
+
+    # Padding & placement
+    padding_x = 400
+    padding_y = 40
+    line_height = 50
+    shadow_offset = 2
+
+    # Semi-transparent overlay behind stats
+    overlay_height = line_height * len(stats_text) + 40
+    overlay_width = bg.width - padding_x - 40
+    overlay = Image.new("RGBA", (overlay_width, overlay_height), (0, 0, 0, 150))
+    bg.paste(overlay, (padding_x - 20, padding_y - 20), overlay)
+
+    # Draw each line with shadow for readability
+    for i, text in enumerate(stats_text):
+        y = padding_y + i * line_height
+        # Shadow
+        draw.text((padding_x + shadow_offset, y + shadow_offset), text, font=font, fill="black")
+        # Foreground
+        draw.text((padding_x, y), text, font=font, fill="white")
+
+    # Output as PNG in memory
     output = io.BytesIO()
     bg.save(output, format="PNG")
     output.seek(0)
