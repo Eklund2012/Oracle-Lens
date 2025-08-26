@@ -117,6 +117,7 @@ def generate_summary_image(stats):
         f"Winrate: {stats['winrate']}%",
         f"KDA: {stats['kda']}",
         f"Average CS: {round(stats['avg_cs'], 1)}",
+        f"CS per Minute: {stats['cs_per_min']}",
         f"Average Gold: {round(stats['avg_gold'], 0)}",
         f"Average Damage: {round(stats['avg_damage'], 0)}",
         f"Games Analyzed: {stats['games']}"
@@ -124,7 +125,7 @@ def generate_summary_image(stats):
 
     # Padding & placement
     padding_x = 400
-    padding_y = 40
+    padding_y = 300
     line_height = 50
     shadow_offset = 2
 

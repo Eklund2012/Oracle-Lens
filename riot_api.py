@@ -100,15 +100,18 @@ class RiotAPIClient:
             "cs": 0,
             "gold": 0,
             "damage": 0,
+            "time_played": 0,
         }
 
         for p in participant_matches:
+            print(p, file=open('output.txt', 'w'))
             if p["win"]:
                 total["wins"] += 1
             total["kills"] += p["kills"]
             total["deaths"] += p["deaths"]
             total["assists"] += p["assists"]
             total["cs"] += p["totalMinionsKilled"] + p.get("neutralMinionsKilled", 0)
+            total["time_played"] += p["timePlayed"]
             total["gold"] += p["goldEarned"]
             total["damage"] += p["totalDamageDealtToChampions"]
 
@@ -119,8 +122,10 @@ class RiotAPIClient:
             "avg_deaths": round(total["deaths"] / games, 2),
             "avg_assists": round(total["assists"] / games, 2),
             "avg_cs": round(total["cs"] / games, 2),
+            "avg_time_played": round(total["time_played"] / games, 2),
             "avg_gold": round(total["gold"] / games, 2),
             "avg_damage": round(total["damage"] / games, 2),
+            "cs_per_min": round((total["cs"] / (total["time_played"] / 60)), 2),  # <-- here
             "games": games,
         }
 
@@ -162,6 +167,8 @@ class RiotAPIClient:
             "winrate": stats["winrate"],
             "kda": f"{stats['avg_kills']} / {stats['avg_deaths']} / {stats['avg_assists']}",
             "avg_cs": stats["avg_cs"],
+            "cs_per_min": stats["cs_per_min"],
+            "avg_time_played": stats["avg_time_played"],
             "avg_gold": stats["avg_gold"],
             "avg_damage": stats["avg_damage"],
             "games": stats["games"],
