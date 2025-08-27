@@ -4,7 +4,7 @@ from discord.ext import commands
 from dotenv import load_dotenv
 from riot_api import RiotAPIClient
 from image_generator import generate_summary_image
-from config.bot_constants import HELP_OUTPUT
+from config.bot_constants import *
 
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
@@ -28,19 +28,29 @@ async def send_message(message, content=None, file=None):
         await message.channel.send(file=file)
 
 def validate_match_count(count):
-    if not isinstance(count, int) or not (1 <= count <= 100):
-        raise ValueError("Match count must be an integer between 1 and 100.")
+    if not isinstance(count, int) or not (1 <= count <= MAX_MATCH_COUNT):
+        raise ValueError(f"Match count must be an integer between 1 and {MAX_MATCH_COUNT}.")
+    
+def validate_region(region):
+    if region.lower() not in VALID_REGIONS:
+        raise ValueError(f"Invalid region. Must be one of: {', '.join(VALID_REGIONS)}")
 
 # Event when the bot is ready
 @bot.event
 async def on_ready():
-    print(f'Logged in as {bot.user}')
+    await riot_api_client.start()   # start persistent session
+    print(f"Logged in as {bot.user}")
+
+@bot.event
+async def on_close():
+    await riot_api_client.close()   # cleanup session when bot shuts down
 
 @bot.hybrid_command(name="lolstats")
-async def lolstats(ctx, summoner_name: str, tag_line: str, region: str, match_count: int = 25):
+async def lolstats(ctx, summoner_name: str, tag_line: str, region: str, match_count: int = DEFAULT_MATCH_COUNT):
     """Fetches League of Legends stats for a summoner."""
     try:
         validate_match_count(match_count)
+        validate_region(region)
     except ValueError as ve:
         await ctx.send(f"{ve}")
         return
@@ -51,7 +61,8 @@ async def lolstats(ctx, summoner_name: str, tag_line: str, region: str, match_co
         tag_line = tag_line[1:]
 
     try:
-        stats = await riot_api_client.calculate_stats(summoner_name, tag_line, region, match_count)
+        async with ctx.typing():
+            stats = await riot_api_client.calculate_stats(summoner_name, tag_line, region, match_count)
     except Exception as e:
         print(f"Error in calculate_stats: {e}")
         await ctx.send("An unexpected error occurred. Please try again later.")
@@ -61,8 +72,9 @@ async def lolstats(ctx, summoner_name: str, tag_line: str, region: str, match_co
         await ctx.send("Failed to fetch stats. Please check the summoner-name, tag-line, and region.")
         return
 
-    #image_path = generate_summary_image(stats)
-    await ctx.send(file=discord.File(generate_summary_image(stats), "summary.png"))
+    file_obj = generate_summary_image(stats)  # returns BytesIO
+    file_obj.seek(0)  # make sure pointer is at start
+    await ctx.send(file=discord.File(file_obj, "summary.png"))
 
 @bot.hybrid_command(name="help_lol")
 async def help_lol(ctx):
@@ -76,9 +88,8 @@ async def on_command_error(ctx, error):
     elif isinstance(error, commands.BadArgument):
         await ctx.send("⚠️ Invalid argument type. Please check your inputs.")
     elif isinstance(error, commands.CommandInvokeError):
-        # This wraps errors inside commands (like API failures)
         original = getattr(error, "original", error)
-        await ctx.send(f"⚠️ An error occurred (flame Madao)")
+        await ctx.send("⚠️ Something went wrong while fetching your stats. Please try again later.")
         print(f"CommandInvokeError: {original}")
     elif isinstance(error, commands.CommandNotFound):
         return  # ignore silently

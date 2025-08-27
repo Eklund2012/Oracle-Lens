@@ -7,6 +7,8 @@ SEMAPHORE_LIMIT = 2
 
 DISCORD_RATE_LIMIT_TIMEOUT = 5
 
+RANKED_SOLO_DUO = 420
+
 # Map common region codes to platform routing values needed by Riot API
 # and regional endpoints.
 REGION_TO_PLATFORM = {

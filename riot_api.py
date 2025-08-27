@@ -1,15 +1,47 @@
-from collections import Counter
 import aiohttp
 import asyncio
+import logging
+from collections import Counter
 from config.API_constants import *
 
 class RiotAPIError(Exception):
     pass
 
 class RiotAPIClient:
-    def __init__(self, api_key: str, rate_limit_timeout: int = DISCORD_RATE_LIMIT_TIMEOUT):
+    def __init__(self, api_key: str, rate_limit_timeout: int = 5):
         self.api_key = api_key
         self.rate_limit_timeout = rate_limit_timeout
+        self.session: aiohttp.ClientSession | None = None
+        self.logger = logging.getLogger(__name__)
+
+    async def start(self):
+        """Initialize the persistent aiohttp session."""
+        if self.session is None or self.session.closed:
+            self.session = aiohttp.ClientSession()
+
+    async def close(self):
+        """Close the aiohttp session gracefully."""
+        if self.session and not self.session.closed:
+            await self.session.close()
+
+    async def send_request(self, url: str, params: dict = None):
+        if not self.session or self.session.closed:
+            await self.start()  # auto-start session if not already
+
+        headers = {"X-Riot-Token": self.api_key}
+        async with self.session.get(url, headers=headers, params=params) as response:
+            if response.status == 200:  # BODY_JSON_RESPONSE
+                return await response.json()
+            elif response.status == 429:  # RATE_LIMIT_EXCEEDED
+                retry_after = int(response.headers.get("Retry-After", self.rate_limit_timeout))
+                self.logger.warning(f"Rate limit exceeded, waiting {retry_after} seconds...")
+                await asyncio.sleep(retry_after)
+                return await self.send_request(url, params)
+            else:
+                error_text = await response.text()
+                raise RiotAPIError(
+                    f"Riot API error {response.status} on {url} with params {params}: {error_text}"
+                )
 
     def get_platform_and_regional(self, region: str):
         """Return platform and regional routing values for the given region."""
@@ -20,24 +52,7 @@ class RiotAPIClient:
                 f"Unsupported region '{region}'. Supported: {list(REGION_TO_PLATFORM.keys())}"
             )
         return platform, regional
-
-    async def send_request(self, url: str, params: dict = None):
-        headers = {"X-Riot-Token": self.api_key}
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url, headers=headers, params=params) as response:
-                if response.status == BODY_JSON_RESPONSE:  # 200
-                    return await response.json()
-                elif response.status == RATE_LIMIT_EXCEEDED:  # 429
-                    retry_after = int(response.headers.get("Retry-After", self.rate_limit_timeout))
-                    print(f"Rate limit exceeded, waiting {retry_after} seconds...")
-                    await asyncio.sleep(retry_after)
-                    return await self.send_request(url, params)
-                else:
-                    error_text = await response.text()
-                    raise RiotAPIError(
-                        f"Riot API error {response.status} on {url} with params {params}: {error_text}"
-                    )
-
+    
     async def get_summoner_info(self, summoner_name: str, tag_line: str, region: str):
         _, regional = self.get_platform_and_regional(region)
         url = f"https://{regional}.api.riotgames.com/riot/account/v1/accounts/by-riot-id/{summoner_name}/{tag_line}"
@@ -51,6 +66,7 @@ class RiotAPIClient:
     async def get_recent_match_ids(self, puuid: str, region: str, count: int = FETCHED_PARTICIPANT_MATCHES):
         _, regional = self.get_platform_and_regional(region)
         url = f"https://{regional}.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids"
+        #params = {"count": count, "queue": RANKED_SOLO_DUO}
         params = {"count": count}
         return await self.send_request(url, params)
 
@@ -104,13 +120,12 @@ class RiotAPIClient:
         }
 
         for p in participant_matches:
-            print(p, file=open('output.txt', 'w'))
             if p["win"]:
                 total["wins"] += 1
             total["kills"] += p["kills"]
             total["deaths"] += p["deaths"]
             total["assists"] += p["assists"]
-            total["cs"] += p["totalMinionsKilled"] + p.get("neutralMinionsKilled", 0)
+            total["cs"] += p.get("totalMinionsKilled", 0) + p.get("neutralMinionsKilled", 0)
             total["time_played"] += p["timePlayed"]
             total["gold"] += p["goldEarned"]
             total["damage"] += p["totalDamageDealtToChampions"]
@@ -125,7 +140,7 @@ class RiotAPIClient:
             "avg_time_played": round(total["time_played"] / games, 2),
             "avg_gold": round(total["gold"] / games, 2),
             "avg_damage": round(total["damage"] / games, 2),
-            "cs_per_min": round((total["cs"] / (total["time_played"] / 60)), 2),  # <-- here
+            "cs_per_min": round(total["cs"] / (total["time_played"] / 60), 2) if total["time_played"] > 0 else 0,
             "games": games,
         }
 

@@ -1,48 +1,47 @@
 import io
 from random import choice
-from tkinter import font
 from PIL import Image, ImageDraw, ImageFont
-from exceptiongroup import catch
 import requests
 from io import BytesIO
 from config.image_constants import *
 from config.API_constants import BODY_JSON_RESPONSE
 
 def get_random_skin(champ):
-    # Fetch champion data to get available skins
     url = f"https://ddragon.leagueoflegends.com/cdn/15.16.1/data/en_US/champion/{champ}.json"
     response = requests.get(url)
-    data = response.json()
+    if response.status_code != BODY_JSON_RESPONSE: # 200
+        raise ValueError(f"Failed to fetch skins for {champ}: "
+                         f"HTTP {response.status_code} - {response.text[:BODY_JSON_RESPONSE]}")
+    try:
+        data = response.json()
+    except Exception as e:
+        raise ValueError(f"Invalid JSON for {champ}: {e} (body={response.text[:BODY_JSON_RESPONSE]})")
 
-    # Extract skin numbers
     skins = [skin["num"] for skin in data["data"][champ]["skins"]]
-
-    # Pick a random skin
-    skin_num = choice(skins)
-    return skin_num
+    return choice(skins)
 
 def get_champion_splash(stats):
-    # Capitalize first letter (required by Riot's CDN)
-    if stats["most_played_champion"]:
-        champ = stats["most_played_champion"].capitalize()
-    else:
-        champ = stats["last_played_champion"].capitalize()
+    champ = stats.get("most_played_champion") or stats.get("last_played_champion")
+    if not champ:
+        print("No champion provided in stats")
+        return None
+    
+    champ = champ.strip()  # remove trailing spaces just in case
     print(f"Fetching splash art for champion: {champ}")
 
-    skin_num = get_random_skin(champ)
+    try:
+        skin_num = get_random_skin(champ)
+    except Exception as e:
+        print(f"Error getting skins for {champ}: {e}")
+        return None
 
     url = f"https://ddragon.leagueoflegends.com/cdn/img/champion/splash/{champ}_{skin_num}.jpg"
-
     try:
         response = requests.get(url)
+        response.raise_for_status()
+        return Image.open(BytesIO(response.content))
     except Exception as e:
-        print(f"Error fetching champion splash: {e}")
-        return None
-    if response.status_code == BODY_JSON_RESPONSE: # 200 OK
-        #return Image.open(BytesIO(response.content)).resize((600, 300))
-        return Image.open(BytesIO(response.content)) # returns image of size (1215, 717)
-    else:
-        print(f"Failed to get splash art for {champ}")
+        print(f"Error fetching champion splash for {champ}: {e}")
         return None
 
 def get_profile_icon(icon_id):
@@ -84,11 +83,11 @@ def generate_icon_image(icon, stats):
     y_start = icon.height - box_height + padding
 
     # Semi-transparent rectangle background
-    overlay = Image.new("RGBA", (icon.width, box_height), (0, 0, 0, 150))
+    overlay = Image.new("RGBA", (icon.width, box_height), STATS_RGBA)
     icon.paste(overlay, (0, icon.height - box_height), overlay)
 
     # Draw shadow
-    shadow_offset = 2
+    shadow_offset = STATS_SHADOW_OFFSET
     for dx, dy in [(shadow_offset, shadow_offset)]:
         draw.text((padding + dx, y_start + dy), name_text, font=name_font, fill="black")
         draw.text((padding + dx, y_start + name_h + padding + dy), tagline_text, font=small_font, fill="black")
@@ -110,7 +109,7 @@ def generate_summary_image(stats):
         bg.paste(icon, (0, 0))
 
     draw = ImageDraw.Draw(bg, "RGBA")
-    font = ImageFont.truetype(title_font, size=40)
+    font = ImageFont.truetype(title_font, size=STATS_FONT_SIZE)
 
     # Stats to display
     stats_text = [
@@ -124,15 +123,15 @@ def generate_summary_image(stats):
     ]
 
     # Padding & placement
-    padding_x = 400
-    padding_y = 300
-    line_height = 50
-    shadow_offset = 2
+    padding_x = STATS_PADDING_X
+    padding_y = STATS_PADDING_Y
+    line_height = STATS_LINE_HEIGHT
+    shadow_offset = STATS_SHADOW_OFFSET
 
     # Semi-transparent overlay behind stats
-    overlay_height = line_height * len(stats_text) + 40
-    overlay_width = bg.width - padding_x - 40
-    overlay = Image.new("RGBA", (overlay_width, overlay_height), (0, 0, 0, 150))
+    overlay_height = line_height * len(stats_text) + STATS_FONT_SIZE
+    overlay_width = bg.width - padding_x - STATS_FONT_SIZE
+    overlay = Image.new("RGBA", (overlay_width, overlay_height), STATS_RGBA)
     bg.paste(overlay, (padding_x - 20, padding_y - 20), overlay)
 
     # Draw each line with shadow for readability
