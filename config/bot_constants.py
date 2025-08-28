@@ -4,6 +4,8 @@ MAX_MATCH_COUNT = 100
 
 DEFAULT_MATCH_COUNT = 25
 
+LOLSTATS_COOLDOWN = 10
+
 HELP_OUTPUT = """
 Available commands:
 - Fetch League of Legends stats for a player. `!lolstats <summoner_name> <tag_line> <region> (optional)<match_amount>`

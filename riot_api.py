@@ -8,7 +8,7 @@ class RiotAPIError(Exception):
     pass
 
 class RiotAPIClient:
-    def __init__(self, api_key: str, rate_limit_timeout: int = 5):
+    def __init__(self, api_key: str, rate_limit_timeout: int = DISCORD_RATE_LIMIT_TIMEOUT):
         self.api_key = api_key
         self.rate_limit_timeout = rate_limit_timeout
         self.session: aiohttp.ClientSession | None = None
@@ -30,9 +30,9 @@ class RiotAPIClient:
 
         headers = {"X-Riot-Token": self.api_key}
         async with self.session.get(url, headers=headers, params=params) as response:
-            if response.status == 200:  # BODY_JSON_RESPONSE
+            if response.status == 200:  # BODY_JSON_RESPONSE = 200
                 return await response.json()
-            elif response.status == 429:  # RATE_LIMIT_EXCEEDED
+            elif response.status == 429:  # RATE_LIMIT_EXCEEDED = 429
                 retry_after = int(response.headers.get("Retry-After", self.rate_limit_timeout))
                 self.logger.warning(f"Rate limit exceeded, waiting {retry_after} seconds...")
                 await asyncio.sleep(retry_after)
@@ -63,11 +63,11 @@ class RiotAPIClient:
         url = f"https://{platform}.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/{puuid}"
         return await self.send_request(url)
 
-    async def get_recent_match_ids(self, puuid: str, region: str, count: int = FETCHED_PARTICIPANT_MATCHES):
+    # Fetch recent match IDs for a given player only fetches RANKED SOLO/DUO
+    async def get_recent_match_ids(self, puuid: str, region: str, count: int = FETCHED_PARTICIPANT_MATCHES): 
         _, regional = self.get_platform_and_regional(region)
         url = f"https://{regional}.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids"
-        #params = {"count": count, "queue": RANKED_SOLO_DUO}
-        params = {"count": count}
+        params = {"count": count, "queue": RANKED_SOLO_DUO}
         return await self.send_request(url, params)
 
     async def get_match_details(self, match_id: str, region: str):
@@ -81,8 +81,8 @@ class RiotAPIClient:
         Fetches match details concurrently, throttled by `max_concurrent` to avoid hitting rate limits.
         """
         matches = await self.get_recent_match_ids(puuid, region, count=match_count)
-        participant_matches = []
-
+        if not matches:
+            return []
         semaphore = asyncio.Semaphore(max_concurrent)
 
         async def fetch_one(match_id):

@@ -24,4 +24,13 @@ Lägg projektet på GitHub med:
 🎥 GIF eller screenshot på botten i action.
 🚀 Om möjligt: en "deploy guide" så andra kan testa din bot.
 
-Cacha match data
+Cacha match data champions skins icons
+Replace prints with logging in riot_api.py
+fallback img for profile pic
+
+Log Level	Function	Description
+DEBUG	logging.debug()	Provides detailed information that’s valuable to you as a developer.
+INFO	logging.info()	Provides general information about what’s going on with your program.
+WARNING	logging.warning()	Indicates that there’s something you should look into.
+ERROR	logging.error()	Alerts you to an unexpected problem that’s occured in your program.
+CRITICAL	logging.critical()	Tells you that a serious error has occurred and may have crashed your app.

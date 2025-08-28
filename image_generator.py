@@ -1,4 +1,5 @@
 import io
+import logging
 from random import choice
 from PIL import Image, ImageDraw, ImageFont
 import requests
@@ -6,8 +7,30 @@ from io import BytesIO
 from config.image_constants import *
 from config.API_constants import BODY_JSON_RESPONSE
 
+from functools import lru_cache
+import time
+
+_version_cache = {"value": None, "timestamp": 0}
+CACHE_TTL = 60 * 60  # refresh every hour
+
+def get_latest_version():
+    now = time.time()
+    if _version_cache["value"] and now - _version_cache["timestamp"] < CACHE_TTL:
+        return _version_cache["value"]
+    logging.debug("Fetching latest version from API")
+    print("Fetching latest version from API")
+
+    url = "https://ddragon.leagueoflegends.com/api/versions.json"
+    response = requests.get(url)
+    response.raise_for_status()
+    versions = response.json()
+    latest = versions[0]
+
+    _version_cache.update({"value": latest, "timestamp": now})
+    return latest
+
 def get_random_skin(champ):
-    url = f"https://ddragon.leagueoflegends.com/cdn/15.16.1/data/en_US/champion/{champ}.json"
+    url = f"https://ddragon.leagueoflegends.com/cdn/{get_latest_version()}/data/en_US/champion/{champ}.json"
     response = requests.get(url)
     if response.status_code != BODY_JSON_RESPONSE: # 200
         raise ValueError(f"Failed to fetch skins for {champ}: "
@@ -45,7 +68,7 @@ def get_champion_splash(stats):
         return None
 
 def get_profile_icon(icon_id):
-    url = f"https://ddragon.leagueoflegends.com/cdn/15.14.1/img/profileicon/{icon_id}.png"
+    url = f"https://ddragon.leagueoflegends.com/cdn/{get_latest_version()}/img/profileicon/{icon_id}.png"
     response = requests.get(url)
     if response.status_code == BODY_JSON_RESPONSE: # 200 OK
         return Image.open(BytesIO(response.content)) # returns image of size (300, 300)
@@ -101,9 +124,9 @@ def generate_icon_image(icon, stats):
     return icon
 
 def generate_summary_image(stats):
-    bg = get_champion_splash(stats) or Image.new("RGB", FALLBACK_BG_SIZE, FALLBACK_BG_RGB) # Fallback background if splash not found
+    bg = get_champion_splash(stats) or Image.new("RGB", CHAMPION_SPLASH_SIZE, FALLBACK_BG_RGB) # Fallback background if splash not found
 
-    icon = get_profile_icon(stats["profile_icon_id"])
+    icon = get_profile_icon(stats["profile_icon_id"]) or Image.new("RGB", PROFILE_ICON_SIZE, FALLBACK_ICON_RGB)
     if icon:
         icon = generate_icon_image(icon, stats)
         bg.paste(icon, (0, 0))
@@ -112,15 +135,17 @@ def generate_summary_image(stats):
     font = ImageFont.truetype(title_font, size=STATS_FONT_SIZE)
 
     # Stats to display
+    single_game = stats['games'] == 1
     stats_text = [
         f"Winrate: {stats['winrate']}%",
         f"KDA: {stats['kda']}",
-        f"Average CS: {round(stats['avg_cs'], 1)}",
+        f"{'CS' if single_game else 'Average CS'}: {round(stats['avg_cs'], 1)}",
         f"CS per Minute: {stats['cs_per_min']}",
-        f"Average Gold: {round(stats['avg_gold'], 0)}",
-        f"Average Damage: {round(stats['avg_damage'], 0)}",
+        f"{'Gold' if single_game else 'Average Gold'}: {round(stats['avg_gold'], 0)}",
+        f"{'Damage' if single_game else 'Average Damage'}: {round(stats['avg_damage'], 0)}",
         f"Games Analyzed: {stats['games']}"
     ]
+
 
     # Padding & placement
     padding_x = STATS_PADDING_X
