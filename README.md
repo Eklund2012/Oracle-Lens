@@ -95,7 +95,7 @@ Extensible: Constants, image generation, and bot commands are modular.
 Handles errors gracefully: invalid summoners, regions, or API failures won’t crash the bot.
 
 ## License
-MIT License – see the [LICENSE](LICENSE) file for details.
+MIT License – see the [LICENSE](docs/LICENSE) file for details.
 
 OracleLens isn't endorsed by Riot Games and doesn't reflect the views or opinions of Riot
 Games or anyone officially involved in producing or managing Riot Games properties. Riot
