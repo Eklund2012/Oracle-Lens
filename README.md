@@ -1,10 +1,9 @@
 # OracleLens
 
-A Discord bot that fetches League of Legends match data using the Riot API and generates
-clean, visual stat summaries for any summoner. Perfect for players who want quick insights
-without digging through dashboards.
+#### A Discord bot that fetches League of Legends match data using the Riot API and generates clean, visual stat summaries for any summoner.
+![OracleLens](assets\img\Oracle_Lens_0.5.png)
 
-Built with Python to showcase backend/API integration, image generation, and bot development.
+OracleLens is perfect for players who want quick insights without digging through dashboards. It’s built with Python and demonstrates asynchronous API integration, image generation, and bot development.
 
 ## Setup
 Follow these steps to get OracleLens running locally:
@@ -86,8 +85,17 @@ Typing !help_lol will give explantion of how to use the bot commands
 !lolstats Clayray EUW euw 30
 ```
 
+## Development Notes
+Fully async: uses aiohttp for Riot API calls and concurrency for fetching match data.
+
+Rate-limit aware: automatically waits when Riot API returns 429.
+
+Extensible: Constants, image generation, and bot commands are modular.
+
+Handles errors gracefully: invalid summoners, regions, or API failures won’t crash the bot.
+
 ## License
-This project is licensed under the MIT License – see the [LICENSE](LICENSE) file for details.
+MIT License – see the [LICENSE](LICENSE) file for details.
 
 OracleLens isn't endorsed by Riot Games and doesn't reflect the views or opinions of Riot
 Games or anyone officially involved in producing or managing Riot Games properties. Riot
@@ -95,4 +103,11 @@ Games, and all associated properties are trademarks or registered trademarks of 
 Inc.
 
 ## Contact
-david.eklund9@gmail.com
+David Eklund - david.eklund9@gmail.com
+
+## Roadmap
+Persistent Riot API key
+
+Deployment
+
+Slash command integration

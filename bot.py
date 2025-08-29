@@ -41,14 +41,6 @@ class MyBot(commands.Bot):
 bot = MyBot(command_prefix="!", intents=intents)
 
 # ----------------- Helper Functions -----------------
-async def send_message(message, content=None, file=None):
-    if content and file:
-        await message.channel.send(content, file=file)
-    elif content:
-        await message.channel.send(content)
-    elif file:
-        await message.channel.send(file=file)
-
 def validate_match_count(count):
     if not isinstance(count, int) or not (1 <= count <= MAX_MATCH_COUNT):
         raise ValueError(f"Match count must be an integer between 1 and {MAX_MATCH_COUNT}.")
@@ -98,7 +90,7 @@ async def lolstats(ctx, summoner_name: str, tag_line: str, region: str, match_co
     await ctx.send("🔍 Fetching summoner data...")
 
     if tag_line.startswith("#"):
-        tag_line = tag_line[1:]
+        tag_line = tag_line[1:].strip()
 
     try:
         async with ctx.typing():

@@ -1,5 +1,6 @@
 import io
 import logging
+import time
 from random import choice
 from PIL import Image, ImageDraw, ImageFont
 import requests
@@ -7,11 +8,8 @@ from io import BytesIO
 from config.image_constants import *
 from config.API_constants import BODY_JSON_RESPONSE
 
-from functools import lru_cache
-import time
-
 _version_cache = {"value": None, "timestamp": 0}
-CACHE_TTL = 60 * 60  # refresh every hour
+CACHE_TTL = ONE_HOUR  # refresh every hour
 
 def get_latest_version():
     now = time.time()
