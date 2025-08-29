@@ -96,7 +96,9 @@ Handles errors gracefully: invalid summoners, regions, or API failures won’t c
 
 ## License
 MIT License – see the [LICENSE](docs/LICENSE) file for details.
+
 Terms of Service [TOS](docs/TERMS_OF_SERVICE.md)
+
 Privacy Policy [PRIVACY](docs/PRIVACY.md)
 
 OracleLens isn't endorsed by Riot Games and doesn't reflect the views or opinions of Riot
