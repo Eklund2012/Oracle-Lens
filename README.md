@@ -1,7 +1,7 @@
 # OracleLens
 
 #### A Discord bot that fetches League of Legends match data using the Riot API and generates clean, visual stat summaries for any summoner.
-![OracleLens](assets\img\Oracle_Lens_0.5.png)
+![OracleLens](assets/img/Oracle_Lens_0.5.png)
 
 OracleLens is perfect for players who want quick insights without digging through dashboards. It’s built with Python and demonstrates asynchronous API integration, image generation, and bot development.
 
